@@ -7,6 +7,8 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import android.os.Handler;
+import android.os.Looper;
 
 import com.alexwan.csci310_team36_projectd.data.Note;
 import com.alexwan.csci310_team36_projectd.data.NoteRepository;
@@ -20,6 +22,15 @@ import java.util.Set;
 
 public class MainViewModel extends AndroidViewModel {
     private NoteRepository mRepository;
+    private static final long REFRESH_INTERVAL_MS = 60_000; // 1 minute
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            refreshRelevantNotes(); // method we'll define next
+            handler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     // Raw data sources from the repository
     private LiveData<List<Note>> mPinnedNotesSource;
@@ -40,13 +51,8 @@ public class MainViewModel extends AndroidViewModel {
         mUnpinnedNotesSource = mRepository.getUnpinnedNotes();
 
         // Get the relevant notes source directly. No city needed.
-        long currentTime = System.currentTimeMillis();
-        long oneHourAgo = currentTime - 3600 * 1000;
-        mRelevantNotesSource = mRepository.getRelevantNotes(currentTime, oneHourAgo);
-
-        // Set up the mediator for the "Relevant" list (notes that are relevant BUT NOT pinned).
-        mFilteredRelevantNotes.addSource(mPinnedNotesSource, pinned -> filterRelevantNotes());
-        mFilteredRelevantNotes.addSource(mRelevantNotesSource, relevant -> filterRelevantNotes());
+        setupRelevantNotes();  // new helper function we’ll define below
+        startAutoRefresh();    // start periodic refresh
 
         // Set up the mediator for the "Other" list (notes that are unpinned BUT NOT relevant).
         mFilteredOtherNotes.addSource(mUnpinnedNotesSource, unpinned -> filterOtherNotes());
@@ -169,5 +175,41 @@ public class MainViewModel extends AndroidViewModel {
 
     public void delete(Note note) {
         mRepository.delete(note);
+    }
+
+    private void setupRelevantNotes() {
+        long currentTime = System.currentTimeMillis();
+        long oneHourAgo = currentTime - 3600 * 1000;
+        mRelevantNotesSource = mRepository.getRelevantNotes(currentTime, oneHourAgo);
+
+        mFilteredRelevantNotes.addSource(mPinnedNotesSource, pinned -> filterRelevantNotes());
+        mFilteredRelevantNotes.addSource(mRelevantNotesSource, relevant -> filterRelevantNotes());
+    }
+
+    /**
+     * Called every minute to requery the database based on the current time window.
+     */
+    private void refreshRelevantNotes() {
+        long currentTime = System.currentTimeMillis();
+        long oneHourAgo = currentTime - 3600 * 1000;
+
+        LiveData<List<Note>> newSource = mRepository.getRelevantNotes(currentTime, oneHourAgo);
+
+        // Remove the old source and add the new one
+        mFilteredRelevantNotes.removeSource(mRelevantNotesSource);
+        mRelevantNotesSource = newSource;
+        mFilteredRelevantNotes.addSource(mRelevantNotesSource, notes -> filterRelevantNotes());
+    }
+
+    /** Start the periodic refresh loop */
+    private void startAutoRefresh() {
+        handler.post(refreshRunnable);
+    }
+
+    /** Stop the loop when ViewModel is destroyed */
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        handler.removeCallbacks(refreshRunnable);
     }
 }
