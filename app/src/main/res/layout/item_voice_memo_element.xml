@@ -14,8 +14,16 @@
 
     <TextView
         android:id="@+id/memo_duration_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="16dp" />
+
+    <ImageButton
+        android:id="@+id/delete_memo_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp" />
+        android:src="@android:drawable/ic_delete"
+        android:background="?attr/selectableItemBackgroundBorderless" />
 
 </LinearLayout>

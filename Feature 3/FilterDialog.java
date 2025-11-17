@@ -1,4 +1,4 @@
-package com.alexwan.csci310_team36_projectd;
+package com.alexwan.csci310team36projectd;
 
 import android.app.Dialog;
 import android.content.Context;

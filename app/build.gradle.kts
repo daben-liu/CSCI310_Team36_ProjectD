@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.alexwan.csci310_team36_projectd"
+    namespace = "com.alexwan.csci310team36projectd"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.alexwan.csci310_team36_projectd"
+        applicationId = "com.alexwan.csci310team36projectd"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

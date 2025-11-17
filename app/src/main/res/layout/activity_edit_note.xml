@@ -87,13 +87,12 @@
         android:paddingEnd="16dp"
         android:gravity="center_vertical">
 
-        <ToggleButton
+        <ImageButton
             android:id="@+id/pin_toggle_button"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android.background="@drawable/ic_pin"
-            android:textOff=""
-            android:textOn="" />
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_pin" />
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/tag_chip_group"
