@@ -8,6 +8,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
+import android.os.Handler;
 
 import com.alexwan.csci310team36projectd.data.FilterState;
 import com.alexwan.csci310team36projectd.data.Note;
@@ -43,6 +44,10 @@ public class MainViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Note>> mFilteredRelevantNotes = new MediatorLiveData<>();
     private final MediatorLiveData<List<Note>> mFilteredOtherNotes = new MediatorLiveData<>();
 
+    private static final long UPDATE_INTERVAL_MS = 60 * 1000; // 1 minute in milliseconds
+    private Handler mHandler;
+    private Runnable mUpdateRunnable;
+
     public MainViewModel(@NonNull Application application) {
         super(application);
         mRepository = new NoteRepository(application);
@@ -64,6 +69,42 @@ public class MainViewModel extends AndroidViewModel {
         mFilteredOtherNotes.addSource(mUnpinnedNotesSource, unpinned -> filterOtherNotes());
         mFilteredOtherNotes.addSource(mFilteredRelevantNotes, relevant -> filterOtherNotes());
         mFilteredOtherNotes.addSource(mFilterState, filterState -> filterOtherNotes()); // Re-filter when filter state changes
+
+        // Initialize a handler that updates the relevant notes every minute
+        mHandler = new Handler();
+        // Define the Runnable that will update the relevant notes
+        mUpdateRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // Get the current list of unpinned notes and the current location
+                List<Note> unpinnedNotes = mUnpinnedNotesSource.getValue();
+                Location location = currentLocation.getValue();
+                // Call the method to recalculate the relevant notes
+                calculateRelevantNotes(unpinnedNotes, location);
+                // Schedule the next update
+                mHandler.postDelayed(this, UPDATE_INTERVAL_MS);
+            }
+        };
+
+        // Start the periodic updates
+        startPeriodicUpdates();
+    }
+
+    private void startPeriodicUpdates() {
+        // Ensure the periodic updates start as soon as the ViewModel is created
+        mHandler.postDelayed(mUpdateRunnable, UPDATE_INTERVAL_MS);
+    }
+
+    // Method to stop periodic updates (e.g., when the ViewModel is cleared)
+    public void stopPeriodicUpdates() {
+        mHandler.removeCallbacks(mUpdateRunnable);
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        // Stop the periodic updates when the ViewModel is cleared
+        stopPeriodicUpdates();
     }
 
     // --- NEW METHOD TO CALCULATE RELEVANCE ---
@@ -77,12 +118,8 @@ public class MainViewModel extends AndroidViewModel {
         long oneHourInMillis = 3600 * 1000;
 
         for (Note note : notes) {
-            boolean isRelevant = false;
             // Rule 1: Upcoming reminders within the next hour
-            if (note.reminderTime > 0 && note.reminderTime > System.currentTimeMillis() && note.reminderTime < System.currentTimeMillis() + oneHourInMillis) {
-                isRelevant = true;
-            }
-
+            boolean isRelevant = (note.reminderTime > 0) && (System.currentTimeMillis() > note.reminderTime) && (System.currentTimeMillis() <= note.reminderTime + oneHourInMillis);
             // Rule 2: Nearby geo-reminders (e.g., within 5km)
             if (!isRelevant && location != null && "geo".equals(note.reminderType) && note.reminderLocation != null) {
                 float[] distanceResults = new float[1];
