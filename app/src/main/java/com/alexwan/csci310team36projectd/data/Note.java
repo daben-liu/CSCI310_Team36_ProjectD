@@ -59,4 +59,27 @@ public class Note {
 
     // Timestamp indicating when the note should no longer be considered relevant.
     public long relevantUntil;
+
+    public boolean isNoteRelevant(Location location) {
+        long oneHourInMillis = 3600 * 1000;
+
+        // time logic
+        boolean isRelevant = (reminderTime > 0)
+                && (System.currentTimeMillis() > reminderTime)
+                && (System.currentTimeMillis() <= reminderTime + oneHourInMillis);
+
+        // geo logic
+        if (!isRelevant && location != null && "geo".equals(reminderType) && reminderLocation != null) {
+            double distance = Location.distanceBetween(
+                    location.latitude,
+                    location.longitude,
+                    reminderLocation.latitude,
+                    reminderLocation.longitude);
+            if (distance < 5000) {
+                isRelevant = true;
+            }
+        }
+
+        return isRelevant;
+    }
 }
