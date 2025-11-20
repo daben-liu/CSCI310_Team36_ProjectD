@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 
 import com.alexwan.csci310team36projectd.data.Note;
-import com.alexwan.csci310team36projectd.MainViewModel;
 
 import org.junit.Rule;
 import org.junit.Test;

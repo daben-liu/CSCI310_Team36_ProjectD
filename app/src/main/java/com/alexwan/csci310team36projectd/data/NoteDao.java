@@ -100,4 +100,8 @@ public interface NoteDao {
 
         return getFilteredNotes(new SimpleSQLiteQuery(sql.toString(), args.toArray()));
     }
+
+    // Added exclusively for reminder tests
+    @Query("SELECT * FROM notes ORDER BY id DESC LIMIT 1")
+    Note getLastInsertedNote();
 }
