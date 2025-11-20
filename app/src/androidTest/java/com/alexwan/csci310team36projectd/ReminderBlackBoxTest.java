@@ -140,4 +140,24 @@ public class ReminderBlackBoxTest {
 
         deleteTestNote();
     }
+
+    // -------------------------------------------------------------
+    // 5. Saved reminder persists after exiting note
+    // -------------------------------------------------------------
+    @Test
+    public void test_savedReminderPersistsAfterExit() {
+        saveNoteAndReopen();
+
+        onView(withId(R.id.reminder_button)).perform(click());
+        onView(withId(R.id.timeReminderBtn)).perform(click());
+
+        onView(withId(R.id.saveReminderBtn)).perform(click());
+
+        onView(withId(R.id.save_button)).perform(click());
+        onView(new RecyclerViewMatcher(R.id.relevant_notes_recycler_view).atPosition(0)).perform(click());
+
+        onView(withId(R.id.reminder_display_layout)).check(matches(isDisplayed()));
+
+        deleteTestNote();
+    }
 }
