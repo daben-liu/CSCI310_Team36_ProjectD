@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -39,7 +40,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNoteClickListener {
@@ -171,8 +174,10 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
                 boolean hasPhoto = currentState != null && currentState.hasPhoto;
                 boolean hasVoiceMemo = currentState != null && currentState.hasVoiceMemo;
                 boolean hasLocation = currentState != null && currentState.hasLocation;
+                java.util.Date startDate = (currentState != null) ? currentState.startDate : null;
+                java.util.Date endDate = (currentState != null) ? currentState.endDate : null;
 
-                mainViewModel.setFilterState(new FilterState(newText, tags, hasPhoto, hasVoiceMemo, hasLocation));
+                mainViewModel.setFilterState(new FilterState(newText, tags, hasPhoto, hasVoiceMemo, hasLocation, startDate, endDate));
                 return true;
             }
         });
@@ -199,14 +204,35 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
         final CheckBox filterHasPhoto = dialogView.findViewById(R.id.filter_has_photo);
         final CheckBox filterHasVoiceMemo = dialogView.findViewById(R.id.filter_has_voice_memo);
         final CheckBox filterHasLocation = dialogView.findViewById(R.id.filter_has_location);
+        final DatePicker filterStartDate = dialogView.findViewById(R.id.filter_start_date);
+        final DatePicker filterEndDate = dialogView.findViewById(R.id.filter_end_date);
+        final CheckBox filterUseDateRange = dialogView.findViewById(R.id.filter_use_date_range);
 
         // Populate dialog with current filter state
         FilterState currentState = mainViewModel.getFilterState().getValue();
+        Calendar calendar = Calendar.getInstance();
+        
         if (currentState != null) {
             filterTags.setText(TextUtils.join(",", currentState.tags));
             filterHasPhoto.setChecked(currentState.hasPhoto);
             filterHasVoiceMemo.setChecked(currentState.hasVoiceMemo);
             filterHasLocation.setChecked(currentState.hasLocation);
+            
+            // Set date pickers if dates exist
+            if (currentState.startDate != null) {
+                calendar.setTime(currentState.startDate);
+                filterStartDate.updateDate(calendar.get(Calendar.YEAR), 
+                                          calendar.get(Calendar.MONTH), 
+                                          calendar.get(Calendar.DAY_OF_MONTH));
+                filterUseDateRange.setChecked(true);
+            }
+            if (currentState.endDate != null) {
+                calendar.setTime(currentState.endDate);
+                filterEndDate.updateDate(calendar.get(Calendar.YEAR), 
+                                        calendar.get(Calendar.MONTH), 
+                                        calendar.get(Calendar.DAY_OF_MONTH));
+                filterUseDateRange.setChecked(true);
+            }
         }
 
         builder.setTitle("Filter Notes")
@@ -222,7 +248,28 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
                     boolean hasVoiceMemo = filterHasVoiceMemo.isChecked();
                     boolean hasLocation = filterHasLocation.isChecked();
 
-                    FilterState newState = new FilterState(text, tags, hasPhoto, hasVoiceMemo, hasLocation);
+                    // Extract date range if checkbox is checked
+                    Date startDate = null;
+                    Date endDate = null;
+                    if (filterUseDateRange.isChecked()) {
+                        Calendar startCal = Calendar.getInstance();
+                        startCal.set(filterStartDate.getYear(), 
+                                    filterStartDate.getMonth(), 
+                                    filterStartDate.getDayOfMonth(), 
+                                    0, 0, 0);
+                        startCal.set(Calendar.MILLISECOND, 0);
+                        startDate = startCal.getTime();
+
+                        Calendar endCal = Calendar.getInstance();
+                        endCal.set(filterEndDate.getYear(), 
+                                  filterEndDate.getMonth(), 
+                                  filterEndDate.getDayOfMonth(), 
+                                  23, 59, 59);
+                        endCal.set(Calendar.MILLISECOND, 999);
+                        endDate = endCal.getTime();
+                    }
+
+                    FilterState newState = new FilterState(text, tags, hasPhoto, hasVoiceMemo, hasLocation, startDate, endDate);
                     mainViewModel.setFilterState(newState);
                 })
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
@@ -230,7 +277,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.OnNot
                     // Clear only the dialog's filters, preserve text search
                     FilterState finalCurrentState = mainViewModel.getFilterState().getValue();
                     String text = (finalCurrentState != null) ? finalCurrentState.text : null;
-                    mainViewModel.setFilterState(new FilterState(text, null, false, false, false));
+                    mainViewModel.setFilterState(new FilterState(text, null, false, false, false, null, null));
                 });
 
         builder.create().show();

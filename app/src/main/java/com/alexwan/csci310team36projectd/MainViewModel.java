@@ -37,7 +37,7 @@ public class MainViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Note>> mDynamicRelevantNotes = new MediatorLiveData<>();
 
     // Filter state
-    private final MutableLiveData<FilterState> mFilterState = new MutableLiveData<>(new FilterState(null, null, false, false, false));
+    private final MutableLiveData<FilterState> mFilterState = new MutableLiveData<>(new FilterState(null, null, false, false, false, null, null));
 
 
     // De-duplicated LiveData lists for the UI
@@ -250,6 +250,20 @@ public class MainViewModel extends AndroidViewModel {
                 .collect(Collectors.toList());
         }
 
+        // Filter by date range (based on lastEdited date)
+        if (filterState.startDate != null || filterState.endDate != null) {
+            searchResults = searchResults.stream()
+                .filter(note -> {
+                    if (note.lastEdited == null) {
+                        return false; // Exclude notes without lastEdited date
+                    }
+                    long noteTime = note.lastEdited.getTime();
+                    boolean afterStart = filterState.startDate == null || noteTime >= filterState.startDate.getTime();
+                    boolean beforeEnd = filterState.endDate == null || noteTime <= filterState.endDate.getTime();
+                    return afterStart && beforeEnd;
+                })
+                .collect(Collectors.toList());
+        }
 
         mFilteredOtherNotes.setValue(searchResults);
     }
