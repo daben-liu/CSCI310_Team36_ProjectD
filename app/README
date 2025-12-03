@@ -1,0 +1,20 @@
+Project improved capabilities since 2.4:
+
+Alex:
+- Modified existing constructor for MainViewmodel to start periodic updates
+- Added additional init constructor to MainViewModel for testing
+- Fixed StartPeriodicUpdates and StopPeriodicUpdates in MainViewModel
+- Adjusted tests in features 1 + 2 to implement new MainViewModel class
+
+Jessica:
+- Added sections in note filter to check for notes edited within a date range
+- Modified MainActivity, MainViewModel, and FilterState to reflect addition of date range filters
+- Added tests in feature 3 for date range filters
+- Ensured existing tests for feature 3 weren't impacted by date filter changes
+
+Daben:
+- Updates MainActivity display to update Relevant notes every minute
+- Added method in MainActivity to check note relevancy
+- Fixed NoteDao database queries that incorrectly calculated time reminder relevancy window
+- Added method in Location class to calculate distance between points
+- Adjusted tests in feature 4 for improved time + location reminder detection
