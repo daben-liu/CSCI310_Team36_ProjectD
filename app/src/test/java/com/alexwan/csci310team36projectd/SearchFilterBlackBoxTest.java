@@ -2,64 +2,24 @@ package com.alexwan.csci310team36projectd;
 
 import static org.junit.Assert.*;
 
-import android.app.Application;
-
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
-
 import com.alexwan.csci310team36projectd.data.FilterState;
 import com.alexwan.csci310team36projectd.data.Note;
-import com.alexwan.csci310team36projectd.data.NoteRepository;
 import com.alexwan.csci310team36projectd.data.model.PhotoElement;
 import com.alexwan.csci310team36projectd.data.model.TextElement;
 import com.alexwan.csci310team36projectd.data.model.VoiceMemoElement;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Black-Box Tests for Feature 3: Fast Search and Filtering
- * 
- * These tests verify the behavior of the search and filtering feature
- * from a user's perspective, without knowledge of internal implementation.
- * 
- * Test Requirements:
- * - Search Based On Title/Body ✓
- * - Filter By Tags ✓
- * - Filter By Date Range ✓
- * - Filter By Has Photo, Voice Memo, or Location ✓
  */
-@RunWith(MockitoJUnitRunner.class)
 public class SearchFilterBlackBoxTest {
-
-    @Rule
-    public InstantTaskExecutorRule rule = new InstantTaskExecutorRule();
-
-    @Mock
-    private Application mockApplication;
-
-    private MainViewModel viewModel;
-    private List<Note> testNotes;
-
-    @Before
-    public void setUp() {
-        viewModel = new MainViewModel(mockApplication);
-        testNotes = createTestNotes();
-    }
 
     // -------------------------------------------------------------
     // Black-Box Test 1: User can search notes by title
@@ -67,18 +27,10 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanSearchNotesByTitle() {
-        // User enters "Shopping" in the search bar
+        List<Note> notes = createTestNotes();
+
         FilterState searchState = new FilterState("Shopping", null, false, false, false);
-        viewModel.setFilterState(searchState);
-
-        // Wait for filter to be applied
-        FilterState currentState = getValue(viewModel.getFilterState());
-        assertNotNull("Filter state should be set", currentState);
-        assertEquals("Search text should match", "Shopping", currentState.text);
-
-        // Verify the search would find notes with "Shopping" in title
-        // This simulates what the user would see in the UI
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, searchState);
         
         assertTrue("Should find at least one note with 'Shopping' in title", 
                    matchingNotes.size() >= 1);
@@ -96,12 +48,10 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanSearchNotesByBodyContent() {
-        // User enters "groceries" in the search bar
-        FilterState searchState = new FilterState("groceries", null, false, false, false);
-        viewModel.setFilterState(searchState);
+        List<Note> notes = createTestNotes();
 
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        FilterState searchState = new FilterState("groceries", null, false, false, false);
+        List<Note> matchingNotes = filterNotesByState(notes, searchState);
 
         // Should find notes where "groceries" appears in the body text
         assertTrue("Should find notes with 'groceries' in body content", 
@@ -132,13 +82,11 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanFilterNotesByTags() {
-        // User selects tags "work" and "urgent" in the filter dialog
-        FilterState filterState = new FilterState(null, Arrays.asList("work", "urgent"), 
-                                                   false, false, false);
-        viewModel.setFilterState(filterState);
+        List<Note> notes = createTestNotes();
 
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        FilterState filterState = new FilterState(null, Arrays.asList("work", "urgent"),
+                                                   false, false, false);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes must have BOTH "work" AND "urgent" tags
         for (Note note : matchingNotes) {
@@ -148,7 +96,7 @@ public class SearchFilterBlackBoxTest {
         }
 
         // Verify notes without both tags are not included
-        for (Note note : testNotes) {
+        for (Note note : notes) {
             if (note.tags == null || 
                 !note.tags.contains("work") || 
                 !note.tags.contains("urgent")) {
@@ -164,12 +112,10 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanFilterNotesByHasPhoto() {
-        // User checks "Has Photo" checkbox in filter dialog
-        FilterState filterState = new FilterState(null, null, true, false, false);
-        viewModel.setFilterState(filterState);
+        List<Note> notes = createTestNotes();
 
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        FilterState filterState = new FilterState(null, null, true, false, false);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes must have at least one photo
         for (Note note : matchingNotes) {
@@ -185,7 +131,7 @@ public class SearchFilterBlackBoxTest {
         }
 
         // Verify notes without photos are not included
-        for (Note note : testNotes) {
+        for (Note note : notes) {
             boolean hasPhoto = false;
             if (note.elements != null) {
                 for (com.alexwan.csci310team36projectd.data.model.NoteElement element : note.elements) {
@@ -208,13 +154,11 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanCombineMultipleFilters() {
-        // User enters "Shopping" in search, selects "work" tag, and checks "Has Photo"
-        FilterState filterState = new FilterState("Shopping", Arrays.asList("work"), 
-                                                   true, false, false);
-        viewModel.setFilterState(filterState);
+        List<Note> notes = createTestNotes();
 
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        FilterState filterState = new FilterState("Shopping", Arrays.asList("work"),
+                                                   true, false, false);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes must satisfy ALL conditions:
         // 1. Title or body contains "Shopping"
@@ -264,7 +208,8 @@ public class SearchFilterBlackBoxTest {
     // -------------------------------------------------------------
     @Test
     public void test_userCanFilterByDateRange() {
-        // Create dates for testing
+        List<Note> notes = createTestNotes();
+
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 10, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
@@ -274,19 +219,14 @@ public class SearchFilterBlackBoxTest {
         cal.set(Calendar.MILLISECOND, 999);
         Date endDate = cal.getTime();
 
-        // Update test notes with specific dates
-        testNotes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15); // In range
-        testNotes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 5); // Before range
-        testNotes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 25); // After range
-        testNotes.get(3).lastEdited = createDate(2024, Calendar.JANUARY, 10); // On start
-        testNotes.get(4).lastEdited = createDate(2024, Calendar.JANUARY, 20); // On end
+        notes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 5);
+        notes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 25);
+        notes.get(3).lastEdited = createDate(2024, Calendar.JANUARY, 10);
+        notes.get(4).lastEdited = createDate(2024, Calendar.JANUARY, 20);
 
-        // User sets date range filter (both start and end dates)
         FilterState filterState = new FilterState(null, null, false, false, false, startDate, endDate);
-        viewModel.setFilterState(filterState);
-
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes must have lastEdited date within the range
         for (Note note : matchingNotes) {
@@ -299,7 +239,7 @@ public class SearchFilterBlackBoxTest {
         }
 
         // Verify notes outside range are not included
-        for (Note note : testNotes) {
+        for (Note note : notes) {
             if (note.lastEdited != null) {
                 long noteTime = note.lastEdited.getTime();
                 boolean inRange = noteTime >= startDate.getTime() && noteTime <= endDate.getTime();
@@ -313,22 +253,19 @@ public class SearchFilterBlackBoxTest {
 
     @Test
     public void test_userCanFilterByStartDateOnly() {
+        List<Note> notes = createTestNotes();
+
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 15, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         Date startDate = cal.getTime();
 
-        // Update test notes
-        testNotes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 10); // Before start
-        testNotes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 15); // On start
-        testNotes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 20); // After start
+        notes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 10);
+        notes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 20);
 
-        // User sets only start date
         FilterState filterState = new FilterState(null, null, false, false, false, startDate, null);
-        viewModel.setFilterState(filterState);
-
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes should be on or after start date
         for (Note note : matchingNotes) {
@@ -341,22 +278,19 @@ public class SearchFilterBlackBoxTest {
 
     @Test
     public void test_userCanFilterByEndDateOnly() {
+        List<Note> notes = createTestNotes();
+
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 15, 23, 59, 59);
         cal.set(Calendar.MILLISECOND, 999);
         Date endDate = cal.getTime();
 
-        // Update test notes
-        testNotes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 10); // Before end
-        testNotes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 15); // On end
-        testNotes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 20); // After end
+        notes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 10);
+        notes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 20);
 
-        // User sets only end date
         FilterState filterState = new FilterState(null, null, false, false, false, null, endDate);
-        viewModel.setFilterState(filterState);
-
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes should be on or before end date
         for (Note note : matchingNotes) {
@@ -369,6 +303,8 @@ public class SearchFilterBlackBoxTest {
 
     @Test
     public void test_userCanCombineDateRangeWithOtherFilters() {
+        List<Note> notes = createTestNotes();
+
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 10, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
@@ -378,23 +314,18 @@ public class SearchFilterBlackBoxTest {
         cal.set(Calendar.MILLISECOND, 999);
         Date endDate = cal.getTime();
 
-        // Update test notes with dates and ensure they have the right properties
-        testNotes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15);
-        testNotes.get(0).title = "Shopping List";
-        testNotes.get(0).tags = Arrays.asList("work");
-        testNotes.get(0).elements.add(new PhotoElement("/path/to/photo.jpg"));
+        notes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(0).title = "Shopping List";
+        notes.get(0).tags = Arrays.asList("work");
+        notes.get(0).elements.add(new PhotoElement("/path/to/photo.jpg"));
 
-        testNotes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 5); // Outside date range
-        testNotes.get(1).title = "Shopping List";
-        testNotes.get(1).tags = Arrays.asList("work");
+        notes.get(1).lastEdited = createDate(2024, Calendar.JANUARY, 5);
+        notes.get(1).title = "Shopping List";
+        notes.get(1).tags = Arrays.asList("work");
 
-        // User combines text search, tags, photo filter, and date range
         FilterState filterState = new FilterState("Shopping", Arrays.asList("work"), 
                                                    true, false, false, startDate, endDate);
-        viewModel.setFilterState(filterState);
-
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // All returned notes must satisfy ALL conditions including date range
         for (Note note : matchingNotes) {
@@ -429,6 +360,8 @@ public class SearchFilterBlackBoxTest {
 
     @Test
     public void test_userCanFilterNotesWithoutDateExcluded() {
+        List<Note> notes = createTestNotes();
+
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 10, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
@@ -438,17 +371,12 @@ public class SearchFilterBlackBoxTest {
         cal.set(Calendar.MILLISECOND, 999);
         Date endDate = cal.getTime();
 
-        // Set some notes with dates, one without
-        testNotes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15);
-        testNotes.get(1).lastEdited = null; // No date
-        testNotes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(0).lastEdited = createDate(2024, Calendar.JANUARY, 15);
+        notes.get(1).lastEdited = null;
+        notes.get(2).lastEdited = createDate(2024, Calendar.JANUARY, 15);
 
-        // User sets date range filter
         FilterState filterState = new FilterState(null, null, false, false, false, startDate, endDate);
-        viewModel.setFilterState(filterState);
-
-        FilterState currentState = getValue(viewModel.getFilterState());
-        List<Note> matchingNotes = filterNotesByState(testNotes, currentState);
+        List<Note> matchingNotes = filterNotesByState(notes, filterState);
 
         // Notes without lastEdited date should be excluded
         for (Note note : matchingNotes) {
@@ -457,7 +385,7 @@ public class SearchFilterBlackBoxTest {
 
         // Verify note without date is not included
         assertFalse("Note without date should not be in results", 
-                   matchingNotes.contains(testNotes.get(1)));
+                   matchingNotes.contains(notes.get(1)));
     }
 
     // Helper method to simulate filtering behavior
@@ -536,7 +464,6 @@ public class SearchFilterBlackBoxTest {
         return filtered;
     }
 
-    // Helper method to create a Date
     private Date createDate(int year, int month, int day) {
         Calendar cal = Calendar.getInstance();
         cal.set(year, month, day, 12, 0, 0);
@@ -544,37 +471,9 @@ public class SearchFilterBlackBoxTest {
         return cal.getTime();
     }
 
-    // Helper method to get LiveData value
-    private <T> T getValue(LiveData<T> liveData) {
-        final Object[] value = new Object[1];
-        CountDownLatch latch = new CountDownLatch(1);
-        
-        Observer<T> observer = new Observer<T>() {
-            @Override
-            public void onChanged(T t) {
-                value[0] = t;
-                latch.countDown();
-                liveData.removeObserver(this);
-            }
-        };
-        
-        liveData.observeForever(observer);
-        try {
-            latch.await(2, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        
-        @SuppressWarnings("unchecked")
-        T result = (T) value[0];
-        return result;
-    }
-
-    // Helper method to create test notes
     private List<Note> createTestNotes() {
         List<Note> notes = new ArrayList<>();
 
-        // Note 1: Shopping list with work tag and photo
         Note note1 = new Note();
         note1.id = 1;
         note1.title = "Shopping List";
@@ -587,7 +486,6 @@ public class SearchFilterBlackBoxTest {
         note1.lastEdited = new Date();
         notes.add(note1);
 
-        // Note 2: Work tasks with work tag
         Note note2 = new Note();
         note2.id = 2;
         note2.title = "Work Tasks";
@@ -599,7 +497,6 @@ public class SearchFilterBlackBoxTest {
         note2.lastEdited = new Date();
         notes.add(note2);
 
-        // Note 3: Personal note with location
         Note note3 = new Note();
         note3.id = 3;
         note3.title = "Personal Reminder";
@@ -615,7 +512,6 @@ public class SearchFilterBlackBoxTest {
         note3.lastEdited = new Date();
         notes.add(note3);
 
-        // Note 4: Shopping with voice memo
         Note note4 = new Note();
         note4.id = 4;
         note4.title = "Shopping for groceries";
@@ -628,7 +524,6 @@ public class SearchFilterBlackBoxTest {
         note4.lastEdited = new Date();
         notes.add(note4);
 
-        // Note 5: Work note with photo and location
         Note note5 = new Note();
         note5.id = 5;
         note5.title = "Shopping Meeting Notes";

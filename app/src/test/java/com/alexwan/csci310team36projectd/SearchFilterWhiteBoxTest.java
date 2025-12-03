@@ -1,31 +1,15 @@
 package com.alexwan.csci310team36projectd;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
-import android.app.Application;
-import android.location.Location;
-
-import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
-
-import com.alexwan.csci310team36projectd.data.AppDatabase;
 import com.alexwan.csci310team36projectd.data.FilterState;
 import com.alexwan.csci310team36projectd.data.Note;
-import com.alexwan.csci310team36projectd.data.NoteRepository;
-import com.alexwan.csci310team36projectd.data.model.ChecklistElement;
 import com.alexwan.csci310team36projectd.data.model.NoteElement;
 import com.alexwan.csci310team36projectd.data.model.PhotoElement;
 import com.alexwan.csci310team36projectd.data.model.TextElement;
 import com.alexwan.csci310team36projectd.data.model.VoiceMemoElement;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,23 +18,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-@RunWith(MockitoJUnitRunner.class)
 public class SearchFilterWhiteBoxTest {
-
-    @Rule
-    public InstantTaskExecutorRule rule = new InstantTaskExecutorRule();
-
-    @Mock
-    private Application mockApplication;
-
-    private MainViewModel viewModel;
-    private NoteRepository mockRepository;
-
-    @Before
-    public void setUp() {
-        // Create a real ViewModel with mocked dependencies
-        viewModel = new MainViewModel(mockApplication);
-    }
 
     // -------------------------------------------------------------
     // White-Box Test 1: FilterState.areFiltersActive() logic
@@ -654,5 +622,5 @@ public class SearchFilterWhiteBoxTest {
         note.lastEdited = lastEdited;
         return note;
     }
-}
 
+}
