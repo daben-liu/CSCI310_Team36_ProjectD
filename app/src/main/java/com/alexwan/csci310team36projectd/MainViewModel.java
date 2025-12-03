@@ -51,6 +51,17 @@ public class MainViewModel extends AndroidViewModel {
     public MainViewModel(@NonNull Application application) {
         super(application);
         mRepository = new NoteRepository(application);
+        init();
+    }
+
+    // Constructor for testing
+    public MainViewModel(@NonNull Application application, NoteRepository repository) {
+        super(application);
+        mRepository = repository;
+        init();
+    }
+
+    private void init() {
         mPinnedNotesSource = mRepository.getPinnedNotes();
         mUnpinnedNotesSource = mRepository.getUnpinnedNotes();
 
@@ -71,33 +82,45 @@ public class MainViewModel extends AndroidViewModel {
         mFilteredOtherNotes.addSource(mFilterState, filterState -> filterOtherNotes()); // Re-filter when filter state changes
 
         // Initialize a handler that updates the relevant notes every minute
-        mHandler = new Handler();
-        // Define the Runnable that will update the relevant notes
-        mUpdateRunnable = new Runnable() {
-            @Override
-            public void run() {
-                // Get the current list of unpinned notes and the current location
-                List<Note> unpinnedNotes = mUnpinnedNotesSource.getValue();
-                Location location = currentLocation.getValue();
-                // Call the method to recalculate the relevant notes
-                calculateRelevantNotes(unpinnedNotes, location);
-                // Schedule the next update
-                mHandler.postDelayed(this, UPDATE_INTERVAL_MS);
-            }
-        };
-
-        // Start the periodic updates
-        startPeriodicUpdates();
+        try {
+            mHandler = new Handler();
+            // Define the Runnable that will update the relevant notes
+            mUpdateRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    // Get the current list of unpinned notes and the current location
+                    List<Note> unpinnedNotes = mUnpinnedNotesSource.getValue();
+                    Location location = currentLocation.getValue();
+                    // Call the method to recalculate the relevant notes
+                    calculateRelevantNotes(unpinnedNotes, location);
+                    // Schedule the next update
+                    if (mHandler != null) {
+                        mHandler.postDelayed(this, UPDATE_INTERVAL_MS);
+                    }
+                }
+            };
+            // Start the periodic updates
+            startPeriodicUpdates();
+        } catch (Exception e) {
+            // In a test environment, a handler can't be created without Looper.prepare().
+            // This is an expected case, so we'll just disable the periodic updates.
+            mHandler = null;
+            mUpdateRunnable = null;
+        }
     }
 
     private void startPeriodicUpdates() {
         // Ensure the periodic updates start as soon as the ViewModel is created
-        mHandler.postDelayed(mUpdateRunnable, UPDATE_INTERVAL_MS);
+        if (mHandler != null && mUpdateRunnable != null) {
+            mHandler.postDelayed(mUpdateRunnable, UPDATE_INTERVAL_MS);
+        }
     }
 
     // Method to stop periodic updates (e.g., when the ViewModel is cleared)
     public void stopPeriodicUpdates() {
-        mHandler.removeCallbacks(mUpdateRunnable);
+        if (mHandler != null && mUpdateRunnable != null) {
+            mHandler.removeCallbacks(mUpdateRunnable);
+        }
     }
 
     @Override
@@ -135,7 +158,7 @@ public class MainViewModel extends AndroidViewModel {
         }
         mDynamicRelevantNotes.setValue(calculatedRelevantNotes);
     }
-    // --- END NEW METHOD ---
+    // --- END NEW METHOD --
 
 
     private void filterRelevantNotes() {
@@ -305,6 +328,8 @@ public class MainViewModel extends AndroidViewModel {
     public Note getNoteByIdBlocking(long noteId) {
         return mRepository.getNoteByIdBlocking(noteId);
     }
+
+
 
     public void insert(Note note) {
         mRepository.insert(note);
