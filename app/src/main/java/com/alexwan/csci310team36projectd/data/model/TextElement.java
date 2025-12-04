@@ -5,19 +5,23 @@ import android.text.SpannableString;
 public class TextElement extends NoteElement {
 
     private SpannableString content;
+    private String contentString;
 
     public TextElement(String text) {
         this.content = new SpannableString(text);
+        this.contentString = text;
     }
 
     // New constructor for use in the TypeConverter
     public TextElement(String id, long timestamp, String content) {
         super(id, timestamp);
         this.content = new SpannableString(content);
+        this.contentString = content;
     }
 
     public void setContent(SpannableString content) {
         this.content = content;
+        this.contentString = content != null ? content.toString() : null;;
     }
 
     public SpannableString getContentAsSpannable() {
@@ -25,7 +29,7 @@ public class TextElement extends NoteElement {
     }
 
     public String getContent() {
-        return content != null ? content.toString() : null;
+        return contentString;
     }
 
     @Override

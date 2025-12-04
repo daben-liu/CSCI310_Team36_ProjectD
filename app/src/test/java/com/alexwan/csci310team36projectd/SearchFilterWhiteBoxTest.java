@@ -412,7 +412,8 @@ public class SearchFilterWhiteBoxTest {
     @Test
     public void test_mainViewModel_dateRangeFilter_startDateOnly() {
         Calendar cal = Calendar.getInstance();
-        cal.set(2024, Calendar.JANUARY, 15, 12, 0, 0);
+        cal.set(2024, Calendar.JANUARY, 15, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date startDate = cal.getTime();
 
         // Create notes with different lastEdited dates
@@ -447,7 +448,8 @@ public class SearchFilterWhiteBoxTest {
     @Test
     public void test_mainViewModel_dateRangeFilter_endDateOnly() {
         Calendar cal = Calendar.getInstance();
-        cal.set(2024, Calendar.JANUARY, 20, 12, 0, 0);
+        cal.set(2024, Calendar.JANUARY, 20, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date endDate = cal.getTime();
 
         Note note1 = createNoteWithDate(createDate(2024, Calendar.JANUARY, 10)); // Before end
@@ -481,8 +483,10 @@ public class SearchFilterWhiteBoxTest {
     public void test_mainViewModel_dateRangeFilter_bothDates() {
         Calendar cal = Calendar.getInstance();
         cal.set(2024, Calendar.JANUARY, 10, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date startDate = cal.getTime();
         cal.set(2024, Calendar.JANUARY, 20, 23, 59, 59);
+        cal.set(Calendar.MILLISECOND, 0);
         Date endDate = cal.getTime();
 
         Note note1 = createNoteWithDate(createDate(2024, Calendar.JANUARY, 5)); // Before range
@@ -519,7 +523,8 @@ public class SearchFilterWhiteBoxTest {
     @Test
     public void test_mainViewModel_dateRangeFilter_excludesNotesWithoutDate() {
         Calendar cal = Calendar.getInstance();
-        cal.set(2024, Calendar.JANUARY, 15, 12, 0, 0);
+        cal.set(2024, Calendar.JANUARY, 15, 0, 0, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         Date startDate = cal.getTime();
         Date endDate = cal.getTime();
 
@@ -611,7 +616,7 @@ public class SearchFilterWhiteBoxTest {
     // Helper method to create a Date
     private Date createDate(int year, int month, int day) {
         Calendar cal = Calendar.getInstance();
-        cal.set(year, month, day, 12, 0, 0);
+        cal.set(year, month, day, 0, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         return cal.getTime();
     }
