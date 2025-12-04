@@ -18,3 +18,10 @@ Daben:
 - Fixed NoteDao database queries that incorrectly calculated time reminder relevancy window
 - Added method in Location class to calculate distance between points
 - Adjusted tests in feature 4 for improved time + location reminder detection
+
+Ryan:
+- Assisted in updating MainViewModel constructors, including the secondary testing-friendly constructor
+- Improved logic ensuring pinned, unpinned, and relevant note lists refresh correctly during periodic updates
+- Updated and expanded test coverage for Features 1-2 to reflect new periodic update + repository syncing behavior
+- Enhanced testing around reminder UI state persistence when user edit notes
+- Fixed issues related to asynchronous update timing causing inconsistent test results
